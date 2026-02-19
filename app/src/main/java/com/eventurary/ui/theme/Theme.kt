@@ -1,58 +1,55 @@
 package com.eventurary.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+private val LocalCustomColors =
+    staticCompositionLocalOf {
+        EventuaryCustomColors.light
+    }
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
+private val LocalThemeInfo =
+    staticCompositionLocalOf {
+        ThemeInfo(isDarkTheme = false)
+    }
 
 @Composable
 fun EventuraryTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val materialColorScheme = if (isDarkTheme) EventuaryMaterialColors.dark else EventuaryMaterialColors.light
+    val customColorScheme = if (isDarkTheme) EventuaryCustomColors.dark else EventuaryCustomColors.light
+    val themeInfo = ThemeInfo(isDarkTheme)
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    CompositionLocalProvider(
+        LocalCustomColors provides customColorScheme,
+        LocalThemeInfo provides themeInfo,
+    ) {
+        MaterialTheme(
+            colorScheme = materialColorScheme,
+            typography = defaultTypography,
+            content = content
+        )
     }
+}
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+object EventuaryTheme {
+    val materialColorScheme: ColorScheme
+        @Composable
+        get() = MaterialTheme.colorScheme
+    val customColorScheme: CustomColorScheme
+        @Composable
+        get() = LocalCustomColors.current
+    val typography: Typography
+        @Composable
+        get() = MaterialTheme.typography
+    val info: ThemeInfo
+        @Composable
+        get() = LocalThemeInfo.current
 }
