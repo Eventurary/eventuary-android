@@ -1,4 +1,4 @@
-package com.eventurary
+package com.eventurary.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EventuraryTheme {
-                EventuraryApp()
+                EventuraryContent()
             }
         }
     }
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
 @PreviewScreenSizes
 @Composable
-fun EventuraryApp() {
+private fun EventuraryContent() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
     NavigationSuiteScaffold(
