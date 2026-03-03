@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+tasks.named("preBuild") {
+    dependsOn(rootProject.tasks.named("installGitHooks"))
+}
+
 android {
     namespace = "com.eventurary"
     compileSdk {

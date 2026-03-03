@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+detektChecks() {
+  echo "Code analysis..."
+  OUTPUT="/tmp/detektChecks-$(date +%s)"
+  ./gradlew detekt > "$OUTPUT"
+
+  if [ $? -eq 0 ]; then
+    echo "PASS"
+  else
+    cat "$OUTPUT"
+    rm "$OUTPUT"
+    echo "FAIL"
+    exit 1
+  fi
+
+  rm "$OUTPUT"
+}
+
+detektChecks
+exit 0
