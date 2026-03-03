@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EventuraryTheme {
-                eventuraryContent()
+                EventuraryContent()
             }
         }
     }
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
 @PreviewScreenSizes
 @Composable
-private fun eventuraryContent() {
+private fun EventuraryContent() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
 
     NavigationSuiteScaffold(
@@ -60,7 +60,7 @@ private fun eventuraryContent() {
         }
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            greeting(
+            Greeting(
                 name = "Android",
                 modifier = Modifier.padding(innerPadding)
             )
@@ -78,7 +78,7 @@ enum class AppDestinations(
 }
 
 @Composable
-fun greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
         modifier = modifier
@@ -87,8 +87,8 @@ fun greeting(name: String, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun greetingPreview() {
+fun GreetingPreview() {
     EventuraryTheme {
-        greeting("Android")
+        Greeting("Android")
     }
 }
