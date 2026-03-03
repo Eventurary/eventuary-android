@@ -1,1 +1,0 @@
-Maximum Java version 20 for detekt compatibility
