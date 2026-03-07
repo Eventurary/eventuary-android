@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.detekt)
+}
+
+tasks.named("preBuild") {
+    dependsOn(rootProject.tasks.named("installGitHooks"))
 }
 
 android {
@@ -39,6 +44,20 @@ android {
         compose = true
         buildConfig = true
     }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+}
+
+detekt {
+    parallel = true
+    buildUponDefaultConfig = true
+    config.setFrom(files("${project.rootDir}/quality/detekt.yml"))
+    baseline = file("${project.rootDir}/quality/detekt-baseline.xml")
+    source.setFrom(
+        files("src/main/java", "src/test/java")
+    )
 }
 
 dependencies {

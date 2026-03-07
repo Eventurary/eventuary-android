@@ -6,15 +6,15 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 private val defaultDarkColorScheme = darkColorScheme(
-    primary = Color(0xFFD0BCFF),
-    secondary = Color(0xFFCCC2DC),
-    tertiary = Color(0xFFEFB8C8),
+    primary = Color(color = 0xFFD0BCFF),
+    secondary = Color(color = 0xFFCCC2DC),
+    tertiary = Color(color = 0xFFEFB8C8),
 )
 
 private val defaultLightColorScheme = lightColorScheme(
-    primary = Color(0xFF6650a4),
-    secondary = Color(0xFF625b71),
-    tertiary = Color(0xFF7D5260),
+    primary = Color(color = 0xFF6650a4),
+    secondary = Color(color = 0xFF625b71),
+    tertiary = Color(color = 0xFF7D5260),
 )
 
 object EventuaryMaterialColors {
