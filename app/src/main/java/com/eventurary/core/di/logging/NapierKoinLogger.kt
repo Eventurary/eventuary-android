@@ -1,4 +1,4 @@
-package com.eventurary.di.logging
+package com.eventurary.core.di.logging
 
 import io.github.aakira.napier.Napier
 import org.koin.core.logger.Level

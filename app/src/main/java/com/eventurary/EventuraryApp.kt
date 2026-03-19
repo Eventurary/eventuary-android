@@ -1,8 +1,8 @@
 package com.eventurary
 
 import android.app.Application
-import com.eventurary.di.logging.NapierKoinLogger
-import com.eventurary.di.allModules
+import com.eventurary.core.di.logging.NapierKoinLogger
+import com.eventurary.core.di.allModules
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import org.koin.android.ext.koin.androidContext
