@@ -1,4 +1,4 @@
-package com.eventurary.ui.screens
+package com.eventurary.events.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.eventurary.ui.viewmodels.EventListViewModel
+import com.eventurary.events.viewmodels.EventListViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

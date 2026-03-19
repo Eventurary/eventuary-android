@@ -1,8 +1,7 @@
-package com.eventurary.di
+package com.eventurary.core.di
 
-import com.eventurary.ui.viewmodels.EventListViewModel
+import com.eventurary.events.viewmodels.EventListViewModel
 import com.eventurary.ui.viewmodels.EventDetailsViewModel
-import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -11,6 +10,6 @@ val appModule = module {
     viewModel { EventListViewModel() }
 }
 
-val allModules = listOf<Module>(
+val allModules = listOf(
     appModule
 )
