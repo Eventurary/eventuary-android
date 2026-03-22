@@ -13,6 +13,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.eventurary.auth.AuthDisplay
 import com.eventurary.auth.ui.screens.OnboardingWallScreen
 import com.eventurary.events.EventDisplay
+import com.eventurary.testing.TestingDisplay
 
 @Composable
 fun NavigationRoot(
@@ -37,6 +38,9 @@ private fun rootNavEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> N
             OnboardingWallScreen(
                 onContinueClicked = {
                     backStack.add(Route.AuthGraph)
+                },
+                onTestingClicked = {
+                    replaceDisplay(Route.TestingGraph, backStack)
                 }
             )
         }
@@ -44,8 +48,7 @@ private fun rootNavEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> N
         entry<Route.AuthGraph> {
             AuthDisplay(
                 onSuccess = {
-                    backStack.clear()
-                    backStack.add(Route.EventsGraph)
+                    replaceDisplay(Route.EventsGraph, backStack)
                 }
             )
         }
@@ -53,4 +56,13 @@ private fun rootNavEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> N
         entry<Route.EventsGraph> {
             EventDisplay()
         }
+
+        entry<Route.TestingGraph> {
+            TestingDisplay()
+        }
     }
+
+private fun replaceDisplay(key: NavKey, backStack: NavBackStack<NavKey>) {
+    backStack.clear()
+    backStack.add(key)
+}

@@ -28,4 +28,10 @@ sealed interface Route: NavKey {
         @Serializable
         data class EventDetails(val eventId: String): Route
     }
+
+    @Serializable
+    data object TestingGraph: Route {
+        @Serializable
+        data object ComponentScreen: Route
+    }
 }
