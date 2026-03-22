@@ -4,8 +4,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 @Composable
-fun Spiderman() {
+fun Marvel(heroName: String) {
     Text(
-        text = "Spiderman"
+        text = "Marvel: $heroName"
     )
 }

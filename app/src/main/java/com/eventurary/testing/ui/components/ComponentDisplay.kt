@@ -1,9 +1,7 @@
 package com.eventurary.testing.ui.components
 
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,8 +10,8 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.eventurary.testing.ui.components.ComponentRoutes.BatmanKey
-import com.eventurary.testing.ui.components.ComponentRoutes.SpidermanKey
+import com.eventurary.testing.ui.components.ComponentRoutes.DCKey
+import com.eventurary.testing.ui.components.ComponentRoutes.MarvelKey
 
 @Composable
 fun ComponentDisplay(
@@ -31,12 +29,13 @@ fun ComponentDisplay(
     )
 }
 
+@Composable
 private fun componentNavEntryProvider(): (NavKey) -> NavEntry<NavKey> = entryProvider {
-    entry<BatmanKey> {
-        Batman()
+    entry<DCKey> {
+        DC(it.hero)
     }
 
-    entry<SpidermanKey> {
-        Spiderman()
+    entry<MarvelKey> {
+        Marvel(it.hero)
     }
 }

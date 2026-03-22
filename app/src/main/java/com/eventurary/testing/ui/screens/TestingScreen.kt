@@ -19,12 +19,12 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import com.eventurary.core.ui.theme.EventuaryTheme
 import com.eventurary.testing.ui.components.ComponentDisplay
 import com.eventurary.testing.ui.components.ComponentRoutes
-import com.eventurary.testing.ui.components.ComponentRoutes.SpidermanKey
-import com.eventurary.testing.ui.components.ComponentRoutes.BatmanKey
+import com.eventurary.testing.ui.components.ComponentRoutes.MarvelKey
+import com.eventurary.testing.ui.components.ComponentRoutes.DCKey
 
 @Composable
 fun TestingScreen() {
-    val componentBackStack = rememberNavBackStack(BatmanKey)
+    val componentBackStack = rememberNavBackStack(DCKey("Superman"))
 
     Column(
         modifier = Modifier
@@ -44,7 +44,7 @@ fun TestingScreen() {
         ) {
             Button(
                 onClick = {
-                    replaceTopBackStack(SpidermanKey, componentBackStack)
+                    replaceTopBackStack(MarvelKey(hero = "Spiderman"), componentBackStack)
                 }
             ) {
                 Text(
@@ -54,7 +54,7 @@ fun TestingScreen() {
 
             Button(
                 onClick = {
-                    replaceTopBackStack(BatmanKey, componentBackStack)
+                    replaceTopBackStack(DCKey(hero = "Batman"), componentBackStack)
                 }
             ) {
                 Text(

@@ -6,8 +6,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface ComponentRoutes: NavKey {
     @Serializable
-    data object SpidermanKey: ComponentRoutes
+    data class MarvelKey(
+        val hero: String
+    ): ComponentRoutes
 
     @Serializable
-    data object BatmanKey: ComponentRoutes
+    data class DCKey(
+        val hero: String
+    ): ComponentRoutes
 }
