@@ -7,6 +7,8 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.eventurary.testing.ui.components.ComponentRoutes.BatmanKey
+import com.eventurary.testing.ui.components.ComponentRoutes.SpidermanKey
 
 @Composable
 fun ComponentDisplay(

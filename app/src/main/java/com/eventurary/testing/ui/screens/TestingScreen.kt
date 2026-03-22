@@ -17,9 +17,10 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.eventurary.core.ui.theme.EventuaryTheme
-import com.eventurary.testing.ui.components.BatmanKey
 import com.eventurary.testing.ui.components.ComponentDisplay
-import com.eventurary.testing.ui.components.SpidermanKey
+import com.eventurary.testing.ui.components.ComponentRoutes
+import com.eventurary.testing.ui.components.ComponentRoutes.SpidermanKey
+import com.eventurary.testing.ui.components.ComponentRoutes.BatmanKey
 
 @Composable
 fun TestingScreen() {
@@ -65,7 +66,7 @@ fun TestingScreen() {
     }
 }
 
-private fun replaceTopBackStack(component: NavKey, backStack: NavBackStack<NavKey>) {
+private fun replaceTopBackStack(component: ComponentRoutes, backStack: NavBackStack<NavKey>) {
     backStack.clear()
     backStack.add(component)
 }
