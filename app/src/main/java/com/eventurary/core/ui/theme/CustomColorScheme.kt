@@ -1,4 +1,4 @@
-package com.eventurary.ui.theme
+package com.eventurary.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

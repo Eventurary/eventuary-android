@@ -1,4 +1,4 @@
-package com.eventurary.ui.theme
+package com.eventurary.core.ui.theme
 
 data class ThemeInfo(
     val isDarkTheme: Boolean,

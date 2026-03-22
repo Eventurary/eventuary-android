@@ -1,7 +1,7 @@
-package com.eventurary.ui.theme.utils
+package com.eventurary.core.ui.theme.utils
 
 import androidx.compose.runtime.Composable
-import com.eventurary.ui.theme.EventuaryTheme
+import com.eventurary.core.ui.theme.EventuaryTheme
 
 @Composable
 fun <T> onDarkMode(
