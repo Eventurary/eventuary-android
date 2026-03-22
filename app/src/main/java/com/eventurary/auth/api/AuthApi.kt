@@ -1,60 +1,121 @@
 package com.eventurary.auth.api
 
-import com.eventurary.core.network.ApiResult
-import com.eventurary.core.network.makeRequest
+import com.eventurary.auth.data.AuthTokensDTO
+import com.eventurary.auth.data.LoginRequest
+import com.eventurary.auth.data.RefreshRequest
+import com.eventurary.auth.data.RegisterRequest
+import com.eventurary.auth.mappers.LoginQueryMapper
+import com.eventurary.auth.mappers.RefreshQueryMapper
+import com.eventurary.auth.mappers.RegisterQueryMapper
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.request.request
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
+import io.ktor.client.call.NoTransformationFoundException
+import io.ktor.client.call.body
+import io.ktor.client.request.post
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.HttpStatusCode.Companion.Created
-import io.ktor.http.contentType
 
-interface AuthApi {
-    suspend fun login(email: String, password: String): ApiResult
-    suspend fun register(email: String, password: String, name: String): ApiResult
-    suspend fun logout(): ApiResult
-    suspend fun isLoggedIn(): Boolean
+sealed class AuthApiResult {
+    data class Success(val response: AuthTokensDTO) : AuthApiResult()
+    data class APIError(val status: HttpStatusCode) : AuthApiResult()
+    object NetworkError : AuthApiResult()
+    object ParsingError : AuthApiResult()
 }
 
+interface AuthApi {
+    suspend fun login(loginRequest: LoginRequest): AuthApiResult
+    suspend fun register(registerRequest: RegisterRequest): AuthApiResult
+    suspend fun refresh(refreshRequest: RefreshRequest): AuthApiResult
+}
+
+// TODO: Path query params or body?
+// TODO: Add type to send, ie if refresh or login type attempt
 class AuthApiImpl(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val loginQueryMapper: LoginQueryMapper,
+    private val registerQueryMapper: RegisterQueryMapper,
+    private val refreshQueryMapper: RefreshQueryMapper,
 ) : AuthApi {
 
     companion object {
         const val LOGIN_PATH = "/login"
         const val REGISTER_PATH = "/register"
-        const val LOGOUT_PATH = "/logout"
-        const val ME_PATH = "/me"
+        const val REFRESH_PATH = "/refresh"
     }
 
-    override suspend fun login(email: String, password: String): ApiResult =
-        client.makeRequest(
-            path = LOGIN_PATH,
-            method = HttpMethod.Post,
-            body = mapOf("email" to email, "password" to password)
+    override suspend fun login(loginRequest: LoginRequest): AuthApiResult {
+        return sendRequest(
+            url = LOGIN_PATH,
+            queryParams = loginQueryMapper.toQueryParams(loginRequest),
         )
+    }
 
-
-    override suspend fun register(email: String, password: String, name: String): ApiResult =
-        client.makeRequest(
-            path = REGISTER_PATH,
-            method = HttpMethod.Post,
-            body = mapOf("email" to email, "password" to password, "name" to name)
+    override suspend fun register(registerRequest: RegisterRequest): AuthApiResult {
+        return sendRequest(
+            url = REGISTER_PATH,
+            queryParams = registerQueryMapper.toQueryParams(registerRequest),
         )
+    }
 
-
-    override suspend fun logout(): ApiResult =
-        client.makeRequest(
-            path = LOGOUT_PATH,
-            method = HttpMethod.Post
+    override suspend fun refresh(refreshRequest: RefreshRequest): AuthApiResult {
+        return sendRequest(
+            url = REFRESH_PATH,
+            queryParams = refreshQueryMapper.toQueryParams(refreshRequest),
         )
+    }
 
+    private suspend fun sendRequest(url: String, queryParams: Map<String, String>): AuthApiResult {
+        return runCatching {
+            val response = client.post(url) {
+                url {
+                    queryParams.forEach { (key, value) ->
+                        parameters.append(key, value)
+                    }
+                }
+            }
 
-    override suspend fun isLoggedIn(): Boolean =
-        client.makeRequest(
-            path = ME_PATH,
-            method = HttpMethod.Get
-        ) is ApiResult.Success
+            handleResponse(response)
+        }.getOrElse { e ->
+            Napier.e(e) { "Network error during request" }
+            AuthApiResult.NetworkError
+        }
+    }
+
+    private suspend fun handleResponse(response: HttpResponse): AuthApiResult {
+        return when (response.status) {
+            HttpStatusCode.OK -> {
+                tryParseBody(response)
+            }
+            HttpStatusCode.Unauthorized -> {
+                Napier.e { "Invalid username or password" }
+                AuthApiResult.APIError(response.status)
+            }
+            HttpStatusCode.BadRequest -> {
+                Napier.e { "Bad request. Please check the input fields." }
+                AuthApiResult.APIError(response.status)
+            }
+            HttpStatusCode.InternalServerError -> {
+                Napier.e { "Something went wrong on the server side." }
+                AuthApiResult.APIError(response.status)
+            }
+            HttpStatusCode.NotFound -> {
+                Napier.e { "Requested resource not found." }
+                AuthApiResult.APIError(response.status)
+            }
+            else -> {
+                Napier.e { "Unexpected error occurred: ${response.status}" }
+                AuthApiResult.APIError(response.status)
+            }
+        }
+    }
+
+    private suspend fun tryParseBody(response: HttpResponse): AuthApiResult {
+        return try {
+            val result = response.body<AuthTokensDTO>()
+            AuthApiResult.Success(result)
+        } catch(e: NoTransformationFoundException) {
+            Napier.e(e) { "Cannot cast login response to valid LoginResultDTO" }
+            AuthApiResult.ParsingError
+        }
+    }
 }

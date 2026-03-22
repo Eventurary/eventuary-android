@@ -33,6 +33,31 @@ class PreferencesDataStoreBridgeImplTest {
     }
 
     @Test
+    fun `when remove key then remove it`() = runTest {
+        // GIVEN
+        val secondKey = "second key"
+
+        mockFlow.value = mutablePreferencesOf(
+            stringPreferencesKey(TEST_KEY) to TEST_STRING_VALUE,
+            stringPreferencesKey(secondKey) to TEST_STRING_VALUE,
+        )
+
+        coEvery { mockDataStore.updateData(any<suspend (Preferences) -> Preferences>()) } coAnswers {
+            val transform = firstArg<suspend (Preferences) -> Preferences>()
+            val updatedPrefs = transform.invoke(mockFlow.value)
+            mockFlow.value = updatedPrefs.toMutablePreferences()
+            updatedPrefs
+        }
+
+        // WHEN
+        cut.removeKey(TEST_KEY)
+
+        // THEN
+        assertNull(cut.getString(TEST_KEY))
+        assertEquals(cut.getString(secondKey), TEST_STRING_VALUE)
+    }
+
+    @Test
     fun `given valid key when getString then return value`() = runTest {
         // GIVEN
         val prefs = mutablePreferencesOf(stringPreferencesKey(TEST_KEY) to TEST_STRING_VALUE)

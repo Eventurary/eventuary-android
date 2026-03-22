@@ -10,6 +10,12 @@ class PreferencesDataStoreBridgeImpl(
     private val dataStore: DataStore<Preferences>
 ) : PreferencesDataStoreBridge {
 
+    override suspend fun removeKey(key: String) {
+        dataStore.edit { prefs ->
+            prefs.remove(stringPreferencesKey(key))
+        }
+    }
+
     override suspend fun getString(key: String): String? {
         val prefs = dataStore.data.first()
         return prefs[stringPreferencesKey(key)]

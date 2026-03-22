@@ -9,11 +9,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.client.call.body
 
-sealed class ApiResult {
-    object Success : ApiResult()
-    data class Error(val statusCode: Int, val message: String) : ApiResult()
-}
-
 suspend fun HttpClient.makeRequest(
     path: String,
     method: HttpMethod,
