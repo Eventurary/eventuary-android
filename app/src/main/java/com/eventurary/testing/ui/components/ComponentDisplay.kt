@@ -1,5 +1,10 @@
 package com.eventurary.testing.ui.components
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
@@ -15,11 +20,14 @@ fun ComponentDisplay(
     modifier: Modifier,
     componentBackStack: NavBackStack<NavKey>
 ) {
-
     NavDisplay(
         entryProvider = componentNavEntryProvider(),
         backStack = componentBackStack,
         modifier = modifier,
+        transitionSpec = {
+            slideInHorizontally( initialOffsetX = { -it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { it + 100 })
+        }
     )
 }
 
