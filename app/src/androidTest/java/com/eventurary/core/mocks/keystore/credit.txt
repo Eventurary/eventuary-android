@@ -1,0 +1,2 @@
+Author: Jing-Wei Wu
+Source: https://medium.com/@wujingwe/write-unit-test-which-has-androidkeystore-dependency-f12181ae6311

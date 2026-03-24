@@ -2,16 +2,17 @@ package com.eventurary.auth.services
 
 import com.eventurary.auth.api.AuthApi
 import com.eventurary.auth.api.AuthApiResult
-import com.eventurary.auth.data.LoginRequest
-import com.eventurary.auth.data.RegisterRequest
+import com.eventurary.auth.data.LoginQueryParams
+import com.eventurary.auth.data.RefreshQueryParams
+import com.eventurary.auth.data.RegisterQueryParams
 import com.eventurary.auth.mappers.AuthTokensMapper
-import com.eventurary.auth.repositories.TokenRepository
+import com.eventurary.auth.repositories.TokensRepository
 import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
 
 class AuthServiceImpl(
     private val authApi: AuthApi,
-    private val tokenRepository: TokenRepository,
+    private val tokensRepository: TokensRepository,
     private val authTokensMapper: AuthTokensMapper,
 ) : AuthService {
 
@@ -20,68 +21,68 @@ class AuthServiceImpl(
         const val MAX_CLIENT_API_FAIL_STATUS_CODE = 499
     }
 
-    override suspend fun login(loginRequest: LoginRequest): AuthResult {
-        val result = authApi.login(loginRequest)
+    override suspend fun login(loginQueryParams: LoginQueryParams): AuthServiceResult {
+        val result = authApi.login(loginQueryParams)
         return handleLogin(result)
     }
 
-    override suspend fun register(registerRequest: RegisterRequest): AuthResult {
-        val result = authApi.register(registerRequest)
+    override suspend fun register(registerQueryParams: RegisterQueryParams): AuthServiceResult {
+        val result = authApi.register(registerQueryParams)
         return handleLogin(result)
     }
 
-    override suspend fun refresh(refreshToken: String): RefreshResult {
-        val result = authApi.refresh(refreshToken)
+    override suspend fun refresh(refreshQueryParams: RefreshQueryParams): RefreshServiceResult {
+        val result = authApi.refresh(refreshQueryParams)
         return handleRefresh(authApiResult = result)
     }
 
     override suspend fun logout() {
-        tokenRepository.clearTokens()
+        tokensRepository.clearTokens()
     }
 
-    private suspend fun handleLogin(authApiResult: AuthApiResult): AuthResult {
+    private suspend fun handleLogin(authApiResult: AuthApiResult): AuthServiceResult {
         return when (authApiResult) {
             is AuthApiResult.Success -> {
                 val tokensDTO = authApiResult.response
                 val tokens = authTokensMapper.map(tokensDTO)
-                tokenRepository.saveTokens(tokens)
+                tokensRepository.saveTokens(tokens)
 
-                AuthResult.Success(tokens)
+                AuthServiceResult.Success(tokens)
             }
 
             else -> {
                 // TODO: Make more descriptive
-                AuthResult.Error("Error on login - to be described")
+                AuthServiceResult.Error("Error on login - to be described")
             }
         }
     }
 
-    private suspend fun handleRefresh(authApiResult: AuthApiResult): RefreshResult {
+    private suspend fun handleRefresh(authApiResult: AuthApiResult): RefreshServiceResult {
         return when (authApiResult) {
             is AuthApiResult.Success -> {
                 Napier.d { "Refresh successful" }
                 authTokensMapper.map(authApiResult.response)
-                    .also { tokenRepository.saveTokens(it) }
-                    .let { RefreshResult.Success(it) }
+                    .also { tokensRepository.saveTokens(it) }
+                    .let { RefreshServiceResult.Success(it) }
             }
 
             is AuthApiResult.APIError -> handleRefreshApiError(authApiResult)
 
             else -> {
                 Napier.d { "Refresh failed" }
-                RefreshResult.Failure
+                RefreshServiceResult.Failure
             }
         }
     }
 
-    private suspend fun handleRefreshApiError(error: AuthApiResult.APIError): RefreshResult {
+    private suspend fun handleRefreshApiError(error: AuthApiResult.APIError): RefreshServiceResult {
         return if (error.status.shouldLogout) {
             Napier.d { "Refresh api failure causing logout" }
-            tokenRepository.clearTokens()
-            RefreshResult.LoggedOut
+            tokensRepository.clearTokens()
+            RefreshServiceResult.LoggedOut
         } else {
             Napier.d { "Refresh api failure not causing logout" }
-            RefreshResult.Failure
+            RefreshServiceResult.Failure
         }
     }
 

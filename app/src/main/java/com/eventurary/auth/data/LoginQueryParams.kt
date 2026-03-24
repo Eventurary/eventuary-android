@@ -3,8 +3,7 @@ package com.eventurary.auth.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RegisterRequest(
-    val username: String,
+data class LoginQueryParams(
     val email: String,
     val password: String,
 )

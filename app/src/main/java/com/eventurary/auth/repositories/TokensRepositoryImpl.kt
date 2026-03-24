@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.eventurary.auth.data.AuthTokens
+import com.eventurary.core.data.CryptoManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -13,18 +14,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-class TokenRepositoryImpl(
-    // TODO: Ensure this is encrypted, as right now will grab basic one
-    private val encryptedDataStore: DataStore<Preferences>,
+class TokensRepositoryImpl(
+    private val dataStore: DataStore<Preferences>,
+    private val cryptoManager: CryptoManager,
     private val json: Json = Json { encodeDefaults = true; ignoreUnknownKeys = true },
-) : TokenRepository {
+) : TokensRepository {
 
     companion object {
         private const val TOKENS_KEY = "auth_tokens"
         private val tokensPrefKey = stringPreferencesKey(TOKENS_KEY)
     }
 
-    override val authTokensFlow: Flow<AuthTokens?> = encryptedDataStore.data
+    override val authTokensFlow: Flow<AuthTokens?> = dataStore.data
         .map { prefs ->
             val serialized = prefs[tokensPrefKey]
             decodeTokens(serialized)
@@ -34,8 +35,10 @@ class TokenRepositoryImpl(
     override suspend fun saveTokens(tokens: AuthTokens) {
         runCatching {
             val serialized = json.encodeToString(tokens)
-            encryptedDataStore.edit { prefs ->
-                prefs[tokensPrefKey] = serialized
+            val encrypted = cryptoManager.encrypt(serialized)
+
+            dataStore.edit { prefs ->
+                prefs[tokensPrefKey] = encrypted
             }
         }.getOrElse { e ->
             Napier.e(e) { "Cannot serialize cookies to string" }
@@ -43,13 +46,13 @@ class TokenRepositoryImpl(
     }
 
     override suspend fun getTokens(): AuthTokens? {
-        val prefs = encryptedDataStore.data.first()
+        val prefs = dataStore.data.first()
         val serialized = prefs[tokensPrefKey]
         return decodeTokens(serialized)
     }
 
     override suspend fun clearTokens() {
-        encryptedDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs.remove(tokensPrefKey)
         }
     }
@@ -58,7 +61,8 @@ class TokenRepositoryImpl(
         if (serialized == null) return null
 
         return runCatching {
-            json.decodeFromString<AuthTokens>(serialized)
+            val decrypted = cryptoManager.decrypt(serialized)
+            json.decodeFromString<AuthTokens>(decrypted)
         }.getOrElse { e ->
             when (e) {
                 is SerializationException -> Napier.e(e) { "Cannot deserialize tokens from string" }

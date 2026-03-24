@@ -1,6 +1,6 @@
 package com.eventurary.auth.useCases
 
-import com.eventurary.auth.repositories.TokenRepository
+import com.eventurary.auth.repositories.TokensRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -10,10 +10,10 @@ interface HasAuthTokenAsFlowUseCase {
 }
 
 class HasAuthTokenAsFlowUseCaseImpl(
-    private val tokenRepository: TokenRepository,
+    private val tokensRepository: TokensRepository,
 ) : HasAuthTokenAsFlowUseCase {
     override fun invoke(): Flow<Boolean> =
-        tokenRepository.authTokensFlow
+        tokensRepository.authTokensFlow
             .map { it != null }
             .distinctUntilChanged()
 }

@@ -3,6 +3,6 @@ package com.eventurary.auth.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RefreshRequest(
+data class RefreshQueryParams(
     val refreshToken: String,
 )
