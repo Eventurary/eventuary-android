@@ -50,34 +50,34 @@ class AuthServiceImplTest {
         )
     }
 
-    private val authApi = mockk<AuthApi>()
-    private val tokensRepository = mockk<TokensRepository>()
-    private val mapper = mockk<AuthTokensMapper>()
+    private val mockAuthApi = mockk<AuthApi>()
+    private val mockTokensRepository = mockk<TokensRepository>()
+    private val mockAuthTokensMapper = mockk<AuthTokensMapper>()
 
     private val cut = AuthServiceImpl(
-        authApi = authApi,
-        tokensRepository = tokensRepository,
-        authTokensMapper = mapper,
+        authApi = mockAuthApi,
+        tokensRepository = mockTokensRepository,
+        authTokensMapper = mockAuthTokensMapper,
     )
 
     @Before
     fun setUp() {
-        every { mapper.map(tokensDto) } returns tokens
-        coJustRun { tokensRepository.saveTokens(any()) }
-        coJustRun { tokensRepository.clearTokens() }
+        every { mockAuthTokensMapper.map(tokensDto) } returns tokens
+        coJustRun { mockTokensRepository.saveTokens(any()) }
+        coJustRun { mockTokensRepository.clearTokens() }
 
     }
 
     @Test
     fun `login success saves tokens and returns success`() = runTest {
         // GIVEN
-        coEvery { authApi.login(loginParams) } returns AuthApiResult.Success(tokensDto)
+        coEvery { mockAuthApi.login(loginParams) } returns AuthApiResult.Success(tokensDto)
 
         // WHEN
         val result = cut.login(loginParams)
 
         // THEN
-        coVerify (exactly = 1) { tokensRepository.saveTokens(tokens) }
+        coVerify (exactly = 1) { mockTokensRepository.saveTokens(tokens) }
         assertTrue(result is AuthServiceResult.Success)
         assertEquals(tokens, (result as AuthServiceResult.Success).tokens)
     }
@@ -85,13 +85,13 @@ class AuthServiceImplTest {
     @Test
     fun `register success behaves like login`() = runTest {
         // GIVEN
-        coEvery { authApi.register(registerParams) } returns AuthApiResult.Success(tokensDto)
+        coEvery { mockAuthApi.register(registerParams) } returns AuthApiResult.Success(tokensDto)
 
         // WHEN
         val result = cut.register(registerParams)
 
         // THEN
-        coVerify(exactly = 1) { tokensRepository.saveTokens(tokens) }
+        coVerify(exactly = 1) { mockTokensRepository.saveTokens(tokens) }
         assertTrue(result is AuthServiceResult.Success)
         assertEquals(tokens, (result as AuthServiceResult.Success).tokens)
     }
@@ -99,26 +99,26 @@ class AuthServiceImplTest {
     @Test
     fun `login failure returns error`() = runTest {
         // GIVEN
-        coEvery { authApi.login(loginParams) } returns AuthApiResult.NetworkError
+        coEvery { mockAuthApi.login(loginParams) } returns AuthApiResult.NetworkError
 
         // WHEN
         val result = cut.login(loginParams)
 
         // THEN
-        coVerify(exactly = 0) { tokensRepository.saveTokens(any()) }
+        coVerify(exactly = 0) { mockTokensRepository.saveTokens(any()) }
         assertTrue(result is AuthServiceResult.Error)
     }
 
     @Test
     fun `refresh success saves tokens and returns success`() = runTest {
         // GIVEN
-        coEvery { authApi.refresh(refreshParams) } returns AuthApiResult.Success(tokensDto)
+        coEvery { mockAuthApi.refresh(refreshParams) } returns AuthApiResult.Success(tokensDto)
 
         // WHEN
         val result = cut.refresh(refreshParams)
 
         // THEN
-        coVerify(exactly = 1) { tokensRepository.saveTokens(tokens) }
+        coVerify(exactly = 1) { mockTokensRepository.saveTokens(tokens) }
         assertTrue(result is RefreshServiceResult.Success)
         assertEquals(tokens, (result as RefreshServiceResult.Success).tokens)
     }
@@ -127,13 +127,13 @@ class AuthServiceImplTest {
     fun `refresh api error with 401 clears tokens and logs out`() = runTest {
         // GIVEN
         val error = AuthApiResult.APIError(HttpStatusCode.Unauthorized)
-        coEvery { authApi.refresh(refreshParams) } returns error
+        coEvery { mockAuthApi.refresh(refreshParams) } returns error
 
         // WHEN
         val result = cut.refresh(refreshParams)
 
         // THEN
-        coVerify(exactly = 1) { tokensRepository.clearTokens() }
+        coVerify(exactly = 1) { mockTokensRepository.clearTokens() }
         assertEquals(RefreshServiceResult.LoggedOut, result)
     }
 
@@ -141,20 +141,20 @@ class AuthServiceImplTest {
     fun `refresh api error with 500 does not clear tokens`() = runTest {
         // GIVEN
         val error = AuthApiResult.APIError(HttpStatusCode.InternalServerError)
-        coEvery { authApi.refresh(refreshParams) } returns error
+        coEvery { mockAuthApi.refresh(refreshParams) } returns error
 
         // WHEN
         val result = cut.refresh(refreshParams)
 
         // THEN
-        coVerify(exactly = 0) { tokensRepository.clearTokens() }
+        coVerify(exactly = 0) { mockTokensRepository.clearTokens() }
         assertEquals(RefreshServiceResult.Failure, result)
     }
 
     @Test
     fun `refresh non api error returns failure`() = runTest {
         // GIVEN
-        coEvery { authApi.refresh(refreshParams) } returns AuthApiResult.NetworkError
+        coEvery { mockAuthApi.refresh(refreshParams) } returns AuthApiResult.NetworkError
 
         // WHEN
         val result = cut.refresh(refreshParams)
@@ -169,6 +169,6 @@ class AuthServiceImplTest {
         cut.logout()
 
         // THEN
-        coVerify(exactly = 1) { tokensRepository.clearTokens() }
+        coVerify(exactly = 1) { mockTokensRepository.clearTokens() }
     }
 }
