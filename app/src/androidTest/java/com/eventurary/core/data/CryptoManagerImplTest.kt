@@ -31,12 +31,17 @@ class CryptoManagerImplTest {
         TestCase.assertEquals(original, decrypted)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun decryptInvalidCipher_Throws() {
+    @Test
+    fun decryptInvalidCipher_throwsCryptoException() {
         // GIVEN
         val invalid = "not_base64"
 
-        // WHEN
-        cut.decrypt(invalid)
+        // WHEN + THEN
+        try {
+            cut.decrypt(invalid)
+            TestCase.fail("Expected CryptoException")
+        } catch (e: CryptoException) {
+            TestCase.assertTrue(e.cause is IllegalArgumentException)
+        }
     }
 }

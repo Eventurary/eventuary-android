@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.eventurary.auth.data.AuthTokens
+import com.eventurary.core.data.CryptoException
 import com.eventurary.core.data.CryptoManager
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +42,10 @@ class TokensRepositoryImpl(
                 prefs[tokensPrefKey] = encrypted
             }
         }.getOrElse { e ->
-            Napier.e(e) { "Cannot serialize cookies to string" }
+            when (e) {
+                is CryptoException -> Napier.e(e) { "CryptoManager error when encrypting AuthTokens" }
+                else -> Napier.e(e) { "Unknown exception when encoding AuthTokens" }
+            }
         }
     }
 
@@ -67,7 +71,8 @@ class TokensRepositoryImpl(
             when (e) {
                 is SerializationException -> Napier.e(e) { "Cannot deserialize tokens from string" }
                 is IllegalArgumentException -> Napier.e(e) { "Cannot decode JSON to AuthTokens" }
-                else -> throw e
+                is CryptoException -> Napier.e(e) { "CryptoManager error when decrypting AuthTokens" }
+                else -> Napier.e(e) { "Unknown exception when decoding AuthTokens" }
             }
             null
         }

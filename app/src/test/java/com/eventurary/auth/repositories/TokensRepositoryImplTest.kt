@@ -7,17 +7,19 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.eventurary.auth.data.AuthTokens
 import com.eventurary.core.data.CryptoManagerImpl
 import com.eventurary.core.mocks.createTestDataStore
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertNull
 
-// TODO: Fix this to check encryption
 class TokensRepositoryImplTest {
     
     companion object {
@@ -29,17 +31,48 @@ class TokensRepositoryImplTest {
         )
     }
 
+    private val mockCryptoManager = mockk<CryptoManagerImpl>()
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var cut: TokensRepositoryImpl
-    private val mockCryptoManager = mockk<CryptoManagerImpl>()
 
     @Before
     fun setup() {
+        every { mockCryptoManager.encrypt(any()) } answers {
+            "enc:${firstArg<String>()}"
+        }
+
+        every { mockCryptoManager.decrypt(any()) } answers {
+            firstArg<String>().removePrefix("enc:")
+        }
+
         dataStore = createTestDataStore()
         cut = TokensRepositoryImpl(
             dataStore = dataStore,
             cryptoManager = mockCryptoManager,
         )
+    }
+
+    @Test
+    fun `saveTokens encrypts before storing`() = runTest {
+        // WHEN
+        cut.saveTokens(tokens)
+
+        // THEN
+        verify(exactly = 1) {
+            mockCryptoManager.encrypt(match { it.contains("access") })
+        }
+    }
+
+    @Test
+    fun `getTokens decrypts stored value`() = runTest {
+        // GIVEN
+        cut.saveTokens(tokens)
+
+        // WHEN
+        cut.getTokens()
+
+        // THEN
+        verify(atLeast = 1) { mockCryptoManager.decrypt(any()) }
     }
 
     @Test
@@ -50,17 +83,32 @@ class TokensRepositoryImplTest {
 
         // THEN
         assertEquals(tokens, emitted)
+        verify { mockCryptoManager.decrypt(any()) }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `authTokensFlow does not emit duplicates`() = runTest {
+        // GIVEN
+        val emissions = mutableListOf<AuthTokens?>()
+
         // WHEN
+        val job = launch {
+            cut.authTokensFlow.collect {
+                emissions.add(it)
+            }
+        }
+
+        advanceUntilIdle()
         cut.saveTokens(tokens)
+        advanceUntilIdle()
         cut.saveTokens(tokens)
-        val emissions = cut.authTokensFlow.take(2).toList()
+        advanceUntilIdle()
+
+        job.cancel()
 
         // THEN
-        assertEquals(1, emissions.distinct().size)
+        assertEquals(listOf(null, tokens), emissions)
     }
 
     @Test
@@ -89,7 +137,7 @@ class TokensRepositoryImplTest {
         // GIVEN
         val key = stringPreferencesKey("auth_tokens")
         dataStore.edit {
-            it[key] = "invalid json"
+            it[key] = "enc:invalid json"
         }
 
         // WHEN
@@ -97,5 +145,35 @@ class TokensRepositoryImplTest {
 
         // THEN
         assertNull(result)
+        verify { mockCryptoManager.decrypt("enc:invalid json") }
+    }
+
+    @Test
+    fun `saveTokens does not store value when encrypt throws`() = runTest {
+        // GIVEN
+        val key = stringPreferencesKey("auth_tokens")
+        every { mockCryptoManager.encrypt(any()) } throws RuntimeException("Crypto failure")
+
+        // WHEN
+        cut.saveTokens(tokens)
+
+        // THEN
+        val prefs = dataStore.data.first()
+        assertNull(prefs[key])
+        verify { mockCryptoManager.encrypt(any()) }
+    }
+
+    @Test
+    fun `getTokens returns null when decrypt throws`() = runTest {
+        // GIVEN
+        every { mockCryptoManager.decrypt(any()) } throws RuntimeException("Crypto failure")
+
+        // WHEN
+        cut.saveTokens(tokens)
+        val result = cut.getTokens()
+
+        // THEN
+        assertNull(result)
+        verify { mockCryptoManager.decrypt(any()) }
     }
 }

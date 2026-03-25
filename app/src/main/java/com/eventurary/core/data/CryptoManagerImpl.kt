@@ -49,26 +49,73 @@ class CryptoManagerImpl : CryptoManager {
 
     private fun createCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
 
+    /**
+     * Encrypts the given plaintext using AES-GCM and returns a Base64-encoded string.
+     *
+     * @param plainText The raw string to encrypt
+     * @return Base64-encoded ciphertext including IV
+     *
+     * @throws CryptoException if encryption fails due to:
+     *   - NoSuchAlgorithmException – if the transformation is invalid or unsupported
+     *   - NoSuchPaddingException – if the requested padding scheme is not available
+     *   - UnsupportedOperationException – if opmode is WRAP/UNWRAP but not implemented
+     *   - InvalidKeyException – if the key is invalid
+     *   - IllegalStateException – if cipher is in a wrong state (e.g., not initialized)
+     *   - IllegalBlockSizeException – if input length is invalid for block cipher
+     *   - BadPaddingException – if padding is incorrect in decryption
+     *   - AEADBadTagException – if GCM/CCM authentication fails
+     *   - AssertionError – if Base64 encoding fails
+     */
     override fun encrypt(plainText: String): String {
-        val cipher = createCipher()
-        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
+        runCatching {
+            val cipher = createCipher()
+            cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
 
-        val iv = cipher.iv
-        val encrypted = cipher.doFinal(plainText.toByteArray())
+            val iv = cipher.iv
+            val encrypted = cipher.doFinal(plainText.toByteArray())
 
-        return Base64.encodeToString(iv + encrypted, Base64.DEFAULT)
+            return Base64.encodeToString(iv + encrypted, Base64.DEFAULT)
+        }.getOrElse { e ->
+            throw CryptoException("Failed to decrypt data", e)
+        }
     }
 
+    /**
+     * Decrypts a Base64-encoded ciphertext produced by [encrypt].
+     *
+     * @param cipherText The Base64-encoded encrypted string
+     * @return The original plaintext
+     *
+     * @throws CryptoException if decryption fails due to:
+     *   - NoSuchAlgorithmException – if the transformation is null, empty, invalid,
+     *     or unsupported by any provider.
+     *   - NoSuchPaddingException – if the requested padding scheme is not available.
+     *   - UnsupportedOperationException – if opmode is WRAP_MODE or UNWRAP_MODE
+     *     but not implemented by the CipherSpi.
+     *   - InvalidKeyException – if the key used is invalid.
+     *   - IllegalStateException – if the cipher is in the wrong state (e.g., not initialized).
+     *   - IllegalBlockSizeException – if input length is invalid for block cipher,
+     *     or encryption cannot process the data.
+     *   - BadPaddingException – if padding is incorrect in decryption mode.
+     *   - AEADBadTagException – if GCM/CCM authentication fails.
+     *   - AssertionError – if Base64 encoding/decoding fails.
+     *   - IndexOutOfBoundsException – if array ranges are invalid (fromIndex < 0 or toIndex > size).
+     *   - IllegalArgumentException – if fromIndex is greater than toIndex.
+     */
     override fun decrypt(cipherText: String): String {
-        val cipher = createCipher()
-        val bytes = Base64.decode(cipherText, Base64.DEFAULT)
+        runCatching {
+            val cipher = createCipher()
+            val bytes = Base64.decode(cipherText, Base64.DEFAULT)
 
-        val iv = bytes.copyOfRange(0, GCM_IV_LENGTH_BYTES)
-        val encrypted = bytes.copyOfRange(GCM_IV_LENGTH_BYTES, bytes.size)
+            val iv = bytes.copyOfRange(0, GCM_IV_LENGTH_BYTES)
+            val encrypted = bytes.copyOfRange(GCM_IV_LENGTH_BYTES, bytes.size)
 
-        val spec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
-        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
+            val spec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
+            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
 
-        return String(cipher.doFinal(encrypted))
+            return String(cipher.doFinal(encrypted))
+        }.getOrElse { e ->
+            throw CryptoException("Failed to decrypt data", e)
+        }
     }
 }
