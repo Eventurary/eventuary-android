@@ -3,9 +3,6 @@ package com.eventurary.auth.di
 import com.eventurary.auth.api.AuthApi
 import com.eventurary.auth.api.AuthApiImpl
 import com.eventurary.auth.mappers.AuthTokensMapper
-import com.eventurary.auth.mappers.LoginQueryMapper
-import com.eventurary.auth.mappers.RefreshQueryMapper
-import com.eventurary.auth.mappers.RegisterQueryMapper
 import com.eventurary.auth.repositories.TokensRepository
 import com.eventurary.auth.repositories.TokensRepositoryImpl
 import com.eventurary.auth.services.AuthService
@@ -39,10 +36,7 @@ val authModule = module {
     
     single<AuthApi> {
         AuthApiImpl(
-            bffClient = get(named(HttpClientDIQualifiers.BFF)),
-            loginQueryMapper = get(),
-            registerQueryMapper = get(),
-            refreshQueryMapper = get(),
+            bffClient = get(named(HttpClientDIQualifiers.BFF))
         )
     }
 
@@ -97,10 +91,6 @@ val authModule = module {
             refreshTokensUseCase = get()
         )
     }
-
-    factory { LoginQueryMapper() }
-    factory { RegisterQueryMapper() }
-    factory { RefreshQueryMapper() }
 
     viewModel { AuthViewModel(authService = get()) }
 

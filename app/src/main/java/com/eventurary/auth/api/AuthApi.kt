@@ -4,9 +4,7 @@ import com.eventurary.auth.data.AuthTokensDTO
 import com.eventurary.auth.data.LoginQueryParams
 import com.eventurary.auth.data.RefreshQueryParams
 import com.eventurary.auth.data.RegisterQueryParams
-import com.eventurary.auth.mappers.LoginQueryMapper
-import com.eventurary.auth.mappers.RefreshQueryMapper
-import com.eventurary.auth.mappers.RegisterQueryMapper
+import com.eventurary.core.network.QueryParams
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.NoTransformationFoundException
@@ -28,14 +26,7 @@ interface AuthApi {
     suspend fun refresh(refreshQueryParams: RefreshQueryParams): AuthApiResult
 }
 
-// TODO: Path query params or body?
-// TODO: Add type to send, ie if refresh or login type attempt
-class AuthApiImpl(
-    private val bffClient: HttpClient,
-    private val loginQueryMapper: LoginQueryMapper,
-    private val registerQueryMapper: RegisterQueryMapper,
-    private val refreshQueryMapper: RefreshQueryMapper,
-) : AuthApi {
+class AuthApiImpl(private val bffClient: HttpClient) : AuthApi {
 
     companion object {
         const val LOGIN_PATH = "/login"
@@ -46,31 +37,29 @@ class AuthApiImpl(
     override suspend fun login(loginQueryParams: LoginQueryParams): AuthApiResult {
         return sendRequest(
             url = LOGIN_PATH,
-            queryParams = loginQueryMapper.toQueryParams(loginQueryParams),
+            queryParams = loginQueryParams,
         )
     }
 
     override suspend fun register(registerQueryParams: RegisterQueryParams): AuthApiResult {
         return sendRequest(
             url = REGISTER_PATH,
-            queryParams = registerQueryMapper.toQueryParams(registerQueryParams),
+            queryParams = registerQueryParams,
         )
     }
 
     override suspend fun refresh(refreshQueryParams: RefreshQueryParams): AuthApiResult {
         return sendRequest(
             url = REFRESH_PATH,
-            queryParams = refreshQueryMapper.toQueryParams(refreshQueryParams),
+            queryParams = refreshQueryParams,
         )
     }
 
-    private suspend fun sendRequest(url: String, queryParams: Map<String, String>): AuthApiResult {
+    private suspend fun sendRequest(url: String, queryParams: QueryParams): AuthApiResult {
         return runCatching {
             val response = bffClient.post(url) {
                 url {
-                    queryParams.forEach { (key, value) ->
-                        parameters.append(key, value)
-                    }
+                    queryParams.applyParams(it)
                 }
             }
 
