@@ -11,31 +11,6 @@ import kotlinx.coroutines.sync.withLock
 
 private val mutex = Mutex()
 
-sealed class RefreshTokensResult {
-    data class Refreshed(val freshTokens: AuthTokens) : RefreshTokensResult()
-    data class StillValid(val freshTokens: AuthTokens) : RefreshTokensResult()
-    data class Stale(val staleTokens: AuthTokens) : RefreshTokensResult()
-    object LoggedOut : RefreshTokensResult()
-
-    companion object {
-        fun RefreshTokensResult.getTokens()  =
-            when (this) {
-                is RefreshTokensResult.Refreshed -> freshTokens
-                is RefreshTokensResult.StillValid -> freshTokens
-                is RefreshTokensResult.Stale -> staleTokens
-                is RefreshTokensResult.LoggedOut -> null
-            }
-
-        fun RefreshTokensResult.getFreshTokens(): AuthTokens? =
-            when (this) {
-                is RefreshTokensResult.Refreshed -> freshTokens
-                is RefreshTokensResult.StillValid -> freshTokens
-                is RefreshTokensResult.Stale -> null
-                is RefreshTokensResult.LoggedOut -> null
-            }
-    }
-}
-
 interface RefreshTokensUseCase {
     suspend operator fun invoke(): RefreshTokensResult
 }
