@@ -8,8 +8,6 @@ class IsLoggedInUseCaseImpl(
     private val getAuthTokensUseCase: GetAuthTokensUseCase
 ) : IsLoggedInUseCase {
 
-    override suspend operator fun invoke(): Boolean {
-        val tokens = getAuthTokensUseCase()
-        return tokens != null
-    }
+    override suspend operator fun invoke(): Boolean =
+        getAuthTokensUseCase() != null
 }
